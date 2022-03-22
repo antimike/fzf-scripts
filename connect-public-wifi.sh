@@ -5,8 +5,8 @@
 # TODO: Add usage information and some basic options (FZF keybinding?)
 # TODO: Improve logging / debug facilities
 
-# Time delay between nmcli rescans
-RESCAN_DELAY=3
+# Time delay between nmcli rescans (milliseconds)
+declare -i RESCAN_DELAY="${RESCAN_DELAY:-2000}"
 
 LOGFILE="$HOME/nmcli.log"
 
@@ -74,9 +74,13 @@ fzf_select_wifi() {
 main() {
     # Infinite "refresh wifi list" loop in the background
     # This seems...suboptimal
+    if (( RESCAN_DELAY < 1000 )); then
+	echo "Rescan delay must be at least 1000 ms" >&2
+	exit 23
+    fi
     while :; do
         nmcli dev wifi rescan >>"${LOGFILE:-/dev/null}" 2>&1
-        sleep $(( RESCAN_DELAY ))
+	sleep "$(bc <<<"scale=3; ${RESCAN_DELAY} / 1000")"
     done &
     local loop_pid=$!
     trap "kill ${loop_pid} 2>>'${LOGFILE:-/dev/null}'" \

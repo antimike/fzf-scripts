@@ -1,15 +1,17 @@
-#!/bin/bash
+#!/bin/zsh -f
+# Adapted from https://github.com/bellecp/fast-p
 
-p() {
-    open=xdg-open   # this will open pdf file withthe default PDF viewer on KDE, xfce, LXDE and perhaps on other desktops.
-
-    ag -U -g ".pdf$" \
-    | fast-p \
-    | fzf
-    # | fzf --read0 --reverse -e -d $'\t'  \
-    #     --preview-window down:80% --preview '
-    #         v=$(echo {q} | tr " " "|"); 
-    #         echo -e {1}"\n"{2} | grep -E "^|$v" -i --color=always;
-    #     ' \
-    # | cut -z -f 1 -d $'\t' | tr -d '\n' | xargs -r --null $open > /dev/null #2> /dev/null
+local PDF_SEARCH='ag -U -g ".pdf$"'
+local -a PDF_FZF_OPTS=(--read0 --reverse -e -d $'\t' '--preview-window down:80%')
+local -a PDF_FZF_PREVIEW='
+    v=$(echo {q} | tr " " "|");
+    echo -e {1}"\n"{2} | grep -E "^|$v" -i --color=always;
+'
+pdfs() {
+    ag -U -g ".pdf$" | fast-p |
+        fzf $PDF_FZF_OPTS --preview $PDF_FZF_PREVIEW |
+        cut -z -f 1 -d $'\t' | tr -d '\n' |
+        xargs -r --null xdg-open > /dev/null 2> /dev/null
 }
+
+pdfs
